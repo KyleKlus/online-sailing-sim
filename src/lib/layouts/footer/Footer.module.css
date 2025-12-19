@@ -1,0 +1,62 @@
+/** @format */
+
+.footer {
+  flex-grow: 0;
+  width: 100%;
+  padding: 1rem;
+  background-color: var(--bg-tertiary);
+  z-index: 20;
+  border-top: var(--border-light);
+}
+
+.footerContent {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+}
+
+.footerContent .navLinkWrapper {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.footerNavLink {
+  font-size: small !important;
+  color: var(--color-accent-10) !important;
+  box-shadow: none !important;
+}
+
+.footerNavLink::after {
+  background-color: transparent !important;
+}
+
+/* Enable hover only on non-touch devices */
+@media (hover: hover) and (pointer: fine) {
+
+  .footerNavLink:hover,
+  .footerNavLink:focus-visible {
+    color: var(--color-accent-00) !important;
+    box-shadow: 0px 1px 0px var(--color-accent-00) !important;
+  }
+}
+
+@media (prefers-reduced-motion) {}
+
+/* Mobile */
+@media (max-width: 700px) {
+  .footer {
+    flex-grow: 1;
+  }
+}
+
+/* Tablet and Smaller Desktop */
+@media (min-width: 701px) and (max-width: 1120px) {}
+
+@media (prefers-color-scheme: dark) {}
