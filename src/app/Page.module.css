@@ -1,4 +1,4 @@
-.toolPage {
+.simPage {
     gap: 2rem;
     padding-bottom: 5rem;
 }
@@ -6,13 +6,13 @@
 @media (max-width: 850px) {}
 
 @media (max-width: 700px) {
-    .toolPage {
+    .simPage {
         padding-bottom: 0;
     }
 }
 
 @media (max-width: 600px) {
-    .toolPage h1 {
+    .simPage h1 {
         margin-top: 1rem;
     }
 }
