@@ -5,18 +5,30 @@ import styles from './Simulator.module.css';
 import { useKeyPress } from "./hooks/useKeyPress";
 import Ship from "./classes/Ship";
 import Wind from "./classes/Wind";
+import Vector2D from "./classes/Vector2D";
 
 export default function Simulator(props: { locale: 'en' | 'de' }) {
+    const scale = 4;
+
+    const [infoText, setInfoText] = useState<string>('');
+
     const isWPressed = useKeyPress('w');
     const isSPressed = useKeyPress('s');
     const isAPressed = useKeyPress('a');
     const isDPressed = useKeyPress('d');
+    const isKPressed = useKeyPress('k');
+    const isLPressed = useKeyPress('l');
     const isTPressed = useKeyPress('t');
 
     const isAPressedRef = useRef(isAPressed);
     const isDPressedRef = useRef(isDPressed);
+    const isWPressedRef = useRef(isWPressed);
+    const isSPressedRef = useRef(isSPressed);
+    const isKPressedRef = useRef(isKPressed);
+    const isLPressedRef = useRef(isLPressed);
+
     const shipRef = useRef<Ship | null>(null);
-    const windRef = useRef<Wind>(new Wind(0, 1));
+    const windRef = useRef<Wind>(new Wind(90, 1));
 
     const animationRef = useRef<number | null>(null);
 
@@ -36,8 +48,12 @@ export default function Simulator(props: { locale: 'en' | 'de' }) {
 
         isAPressedRef.current = isAPressed;
         isDPressedRef.current = isDPressed;
+        isWPressedRef.current = isWPressed;
+        isSPressedRef.current = isSPressed;
+        isKPressedRef.current = isKPressed;
+        isLPressedRef.current = isLPressed;
 
-    }, [isAPressed, isDPressed]);
+    }, [isAPressed, isDPressed, isWPressed, isSPressed, isKPressed, isLPressed]);
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -50,7 +66,7 @@ export default function Simulator(props: { locale: 'en' | 'de' }) {
         canvas.height = canvasYSize.current;
 
         // Initialize ship
-        shipRef.current = new Ship({ x: canvasXSize.current / 2, y: canvasYSize.current / 2, orientation: 0 });
+        shipRef.current = new Ship(canvasXSize.current / 2, canvasYSize.current / 2, 0);
 
         // Start the animation
         render();
@@ -66,18 +82,55 @@ export default function Simulator(props: { locale: 'en' | 'de' }) {
     function drawShip(ctx: CanvasRenderingContext2D) {
         if (!shipRef.current) return;
 
-        const shipTopLeftX = shipRef.current.position.x - shipRef.current.length / 2;
-        const shipTopLeftY = shipRef.current.position.y - shipRef.current.width / 2;
+        const shipTopLeftX = -(shipRef.current.length / 2) * scale;
+        const shipTopLeftY = 0;
 
-        const shipLength = shipRef.current.length;
-        const shipWidth = shipRef.current.width;
+        const shipLength = shipRef.current.length * scale;
+        const shipWidth = shipRef.current.width * scale;
         const shipBackRadius = shipWidth / 2;
+
+        const shipOrientationVector = shipRef.current.getShipOrientationVector();
+        const shipPositionVector = shipRef.current.getPositionVector();
 
         ctx.save();
         ctx.fillStyle = 'white';
 
+        ctx.translate(shipPositionVector.x, shipPositionVector.y);
+        ctx.rotate(shipOrientationVector.getAngleInRad());
         ctx.translate(shipTopLeftX, shipTopLeftY);
-        ctx.rotate(shipRef.current.position.orientation * Math.PI / 180);
+
+        ctx.fillRect(-shipLength / 3, -shipWidth / 2, shipLength, shipWidth);
+
+        ctx.beginPath();
+        ctx.arc(-shipLength / 3, 0, shipBackRadius, 0, 2 * Math.PI);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.ellipse(shipLength / 2, 0, shipLength, shipWidth / 2, 0, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.restore();
+        drawSail(ctx, scale);
+
+        drawVector(ctx, 'green', shipRef.current.getAccelerationVector());
+        drawVector(ctx, 'red', shipRef.current.getDragVector(), 5);
+        drawVector(ctx, 'orange', shipRef.current.getKeelResistanceVector());
+
+        drawVector(ctx, 'black', shipRef.current.getSpeedVector());
+        drawVector(ctx, 'blue', shipRef.current.getSail().getWindEffectVector());
+    }
+
+    function drawVector(ctx: CanvasRenderingContext2D, color: string, vector: Vector2D, enhancedLength: number = 1) {
+        if (!shipRef.current) return;
+
+        const shipLength = vector.length() * scale * enhancedLength;
+        const shipWidth = 1 * scale;
+        const shipBackRadius = shipWidth / 2;
+
+        ctx.save();
+        ctx.fillStyle = color;
+
+        ctx.translate(canvasXSize.current / 2, canvasYSize.current / 2);
+        ctx.rotate(vector.getAngleInRad());
         ctx.fillRect(0, -shipWidth / 2, shipLength, shipWidth);
 
         ctx.beginPath();
@@ -85,7 +138,36 @@ export default function Simulator(props: { locale: 'en' | 'de' }) {
         ctx.fill();
 
         ctx.beginPath();
-        ctx.ellipse(shipLength, 0, shipLength, shipWidth / 2, 0, 0, 2 * Math.PI);
+        ctx.ellipse(shipLength, 0, Math.abs(shipLength), shipWidth / 2, 0, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.restore();
+    }
+
+    function drawSail(ctx: CanvasRenderingContext2D, scale: number) {
+        if (!shipRef.current) return;
+
+        const sailLength = shipRef.current.getSail().sailLength * scale;
+        const sailWidth = shipRef.current.getSail().sailWidth * scale;
+        const sailBackRadius = sailWidth / 2;
+
+        const shipTopLeftX = shipRef.current.getPositionVector().x;
+        const shipTopLeftY = shipRef.current.getPositionVector().y;
+
+        const sailVector = shipRef.current.getSail().getSailVector();
+
+        ctx.save();
+        ctx.fillStyle = 'brown';
+
+        ctx.translate(shipTopLeftX, shipTopLeftY);
+        ctx.rotate((sailVector.getAngleInRad()));
+        ctx.fillRect(0, -sailWidth / 2, sailLength, sailWidth);
+
+        ctx.beginPath();
+        ctx.arc(0, 0, sailBackRadius, 0, 2 * Math.PI);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.ellipse(sailLength, 0, sailLength, sailWidth / 2, 0, 0, 2 * Math.PI);
         ctx.fill();
 
         ctx.restore();
@@ -94,11 +176,12 @@ export default function Simulator(props: { locale: 'en' | 'de' }) {
     function drawWind(ctx: CanvasRenderingContext2D) {
         if (!shipRef.current) return;
 
-        const windMagnitude = Math.max(windRef.current.getSpeed() * 3, 15);
+        const windVector = windRef.current.getVector();
+        const windMagnitude = Math.max(windVector.length(), 3) * scale;
 
         ctx.save();
-        ctx.translate(30, 30);
-        ctx.rotate(windRef.current.orientation * Math.PI / 180);
+        ctx.translate(50, 50);
+        ctx.rotate(windVector.getAngleInRad());
 
         ctx.fillStyle = 'white';
         ctx.beginPath();
@@ -125,23 +208,57 @@ export default function Simulator(props: { locale: 'en' | 'de' }) {
     function calcScene() {
         windRef.current.modifyWind();
         if (!shipRef.current) return;
+        const shipOrientationVector = shipRef.current.getShipOrientationVector();
 
         if (isAPressedRef.current && !isDPressedRef.current) {
-            const newOrientation = shipRef.current.position.orientation - 5;
-            shipRef.current.position.orientation = newOrientation < 0 ? 360 + newOrientation : newOrientation;
+            shipRef.current.turnLeft();
         }
 
         if (isDPressedRef.current && !isAPressedRef.current) {
-            const newOrientation = shipRef.current.position.orientation + 5;
-            shipRef.current.position.orientation = newOrientation > 360 ? newOrientation - 360 : newOrientation;
+            shipRef.current.turnRight();
         }
 
-        console.log(
-            `Wind Orientation: ${windRef.current.getOrientation()}`,
-            `Ship Orientation: ${shipRef.current.position.orientation}`,
-            `Wind Power: ${(Math.abs(windRef.current.getOrientation() - shipRef.current.position.orientation))}`,
-        );
-        shipRef.current.updateShip(windRef.current);
+        if (isWPressedRef.current && !isSPressedRef.current) {
+            shipRef.current.getSail().furlSail();
+        }
+
+        if (isSPressedRef.current && !isWPressedRef.current) {
+            shipRef.current.getSail().unfurlSail();
+        }
+
+        if (isKPressedRef.current && !isLPressedRef.current) {
+            shipRef.current.getSail().increaseOrientation();
+        }
+
+        if (isLPressedRef.current && !isKPressedRef.current) {
+            shipRef.current.getSail().decreaseOrientation();
+        }
+
+        shipRef.current.applyWind(windRef.current, canvasXSize.current, canvasYSize.current, true);
+    }
+
+    function setText() {
+        if (!shipRef.current) return;
+
+        const anchorStateText = shipRef.current.getAnchorState()
+            ? (props.locale === 'de' ? 'Anker gelichtet' : 'Anchor dropped')
+            : (props.locale === 'de' ? 'Anker gesetzt' : 'Anchor raised');
+
+        const sailFurledRatioText = `Sail Open: ${Math.round(shipRef.current.getSail().getUnFurledRatio() * 100)}%`;
+
+        const sailOrientationText = `Sail Angle: ${shipRef.current.getSail().getSailVector().getAngleInDeg()}°`;
+
+        const shipOrientationText = `Ship Angle: ${shipRef.current.getShipOrientationVector().getAngleInDeg()}°`;
+
+        const speedText = `Speed: ${shipRef.current.getSpeedVector().signedLength()}kn`;
+
+        const positionText = `Position: ${Math.round(shipRef.current.getPositionVector().x * 10) / 10}m, ${Math.round(shipRef.current.getPositionVector().y * 10) / 10}m`;
+
+        const windOrientationText = `Wind Angle: ${windRef.current.getVector().getAngleInDeg()}°`;
+
+        const windSpeedText = `Wind Speed: ${Math.round(windRef.current.getVector().length() * 10) / 10}kn`;
+
+        setInfoText(`${anchorStateText} | ${sailFurledRatioText} | ${sailOrientationText} | ${shipOrientationText} | ${speedText} | ${positionText} | ${windOrientationText} | ${windSpeedText}`);
     }
 
     function render() {
@@ -164,6 +281,7 @@ export default function Simulator(props: { locale: 'en' | 'de' }) {
         if (!context) return;
 
         calcScene();
+        setText();
         drawScene(context);
 
         // Request the next frame
@@ -175,6 +293,9 @@ export default function Simulator(props: { locale: 'en' | 'de' }) {
     return (
         <div className={styles.simulator}>
             <canvas className={styles.simulatorView} ref={canvasRef} id='simulatorCanvas' />
+            <div className={styles.simulatorInfo}>
+                <p>{infoText}</p>
+            </div>
         </div>
     );
 }

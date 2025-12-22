@@ -4,7 +4,7 @@
     justify-content: center;
     align-items: center;
     width: 100%;
-    padding: 2rem 4rem;
+    padding: 0rem 4rem 2rem 4rem;
     flex-grow: 1;
 
     --ocean-color: #54a1dcd6;
@@ -16,8 +16,23 @@
     flex-grow: 1;
     background-color: var(--ocean-color);
     border: 1px solid var(--bg-color-50);
-    border-radius: var(--border-radius);
+    border-top-left-radius: var(--border-radius);
+    border-top-right-radius: var(--border-radius);
     box-shadow: var(--main-box-shadow);
+}
+
+.simulatorInfo {
+    width: 100%;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid var(--bg-color-50);
+    border-bottom-left-radius: var(--border-radius);
+    border-bottom-right-radius: var(--border-radius);
+    background-color: var(--bg-color-00);
+    gap: 1rem;
 }
 
 .simulator button {
