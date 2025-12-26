@@ -8,16 +8,16 @@ class Ship {
     public depth: number = 4; // in meters
     public length: number = 15; // in meters
 
-    private frontResistance: number = 0.01; // resistance factor per area
-    private backwardResistance: number = 0.03; // resistance
+    private frontResistance: number = 0.002; // resistance factor per area
+    private backwardResistance: number = 0.4; // resistance
     private keelResistance: number = 1; // How much the keel resists lateral movement
-    private accelerationFactor: number = 0.1; // acceleration factor
+    private accelerationFactor: number = 0.008; // acceleration factor
 
     private isAnchored: boolean = true;
     private sail: Sail;
     private positionVector: Vector2D;
     private orientationVector: Vector2D;
-    private speedScaledOrientationVector: Vector2D = new Vector2D(0, 0);
+    private speedScaledOrientationVector: Vector2D;
     private keelResistanceVector: Vector2D = new Vector2D(0, 0);
     private accelerationVector: Vector2D = new Vector2D(0, 0);
     private dragVector: Vector2D = new Vector2D(0, 0);
@@ -26,6 +26,7 @@ class Ship {
         this.positionVector = new Vector2D(x, y);
         const defaultOrientationInRad = convertToRadians(defaultOrientation);
         this.orientationVector = new Vector2D(Math.cos(defaultOrientationInRad), Math.sin(defaultOrientationInRad));
+        this.speedScaledOrientationVector = this.orientationVector.clone().scale(0);
         this.sail = new Sail(5, 0, 0, 180, this.orientationVector.clone());
     }
 
@@ -64,12 +65,14 @@ class Ship {
     turnLeft() {
         const changeInRad = -convertToRadians(1);
         this.orientationVector = this.orientationVector.rotate(changeInRad);
+        this.speedScaledOrientationVector = this.speedScaledOrientationVector.rotate(changeInRad);
         this.sail.applyShipOrientationChange(changeInRad);
     }
 
     turnRight() {
         const changeInRad = convertToRadians(1);
         this.orientationVector = this.orientationVector.rotate(changeInRad);
+        this.speedScaledOrientationVector = this.speedScaledOrientationVector.rotate(changeInRad);
         this.sail.applyShipOrientationChange(changeInRad);
     }
 
@@ -104,11 +107,11 @@ class Ship {
 
         // Calculate wind effect on sail
         this.sail.applyWind(wind);
-        this.applyWindEffect(this.speedScaledOrientationVector);
-        this.applyDrag(this.speedScaledOrientationVector);
+        this.applyWindEffect();
+        this.applyDrag();
 
         if (!debugStationary) {
-            this.positionVector = this.positionVector.add(this.speedScaledOrientationVector);
+            this.positionVector = this.positionVector.add(this.speedScaledOrientationVector.scale(wind.speedScale));
         }
 
         // Keep ship within bounds
@@ -131,23 +134,28 @@ class Ship {
         return keelResistanceVector;
     }
 
-    private applyWindEffect(speedScaledOrientationVector: Vector2D) {
+    private applyWindEffect() {
         const windEffectVector = this.sail.getWindEffectVector();
 
         this.keelResistanceVector = this.calculateKeelResistanceVector(windEffectVector);
 
         // Update speed vector
+        const maxSpeedVector = windEffectVector.subtract(this.keelResistanceVector);
         let accelerationVector = windEffectVector.subtract(this.keelResistanceVector);
         accelerationVector = accelerationVector.scale(accelerationVector.signedLength() * this.accelerationFactor);
         this.accelerationVector = accelerationVector.clone();
-        this.speedScaledOrientationVector = speedScaledOrientationVector.add(accelerationVector);
+        this.speedScaledOrientationVector = this.speedScaledOrientationVector.add(accelerationVector);
+
+        this.speedScaledOrientationVector = this.speedScaledOrientationVector.signedLength() > maxSpeedVector.signedLength()
+            ? maxSpeedVector.clone()
+            : this.speedScaledOrientationVector.clone();
     }
 
-    private applyDrag(speedScaledOrientationVector: Vector2D) {
+    private applyDrag() {
         // gets the drag vector
-        let dragVector = speedScaledOrientationVector.clone().rotate(Math.PI).normalize();
+        let dragVector = this.speedScaledOrientationVector.clone().rotate(Math.PI).normalize();
 
-        if (speedScaledOrientationVector.signedLength() < 0) {
+        if (this.speedScaledOrientationVector.signedLength() < 0) {
             dragVector = dragVector.normalize().scale(this.backwardResistance * this.width * this.depth);
         } else {
             dragVector = dragVector.normalize().scale(this.frontResistance * this.width * this.depth);
@@ -155,15 +163,20 @@ class Ship {
 
         this.dragVector = dragVector.clone();
 
-        const preDragSpeed = speedScaledOrientationVector.signedLength();
-        let modifiedSpeedVector = speedScaledOrientationVector.add(dragVector);
-        if (preDragSpeed > 0 && modifiedSpeedVector.signedLength() < 0) {
-            modifiedSpeedVector = modifiedSpeedVector.scale(0);
-        } else if (preDragSpeed < 0 && modifiedSpeedVector.signedLength() > 0) {
-            modifiedSpeedVector = modifiedSpeedVector.scale(0);
+        const preDragSpeed = this.speedScaledOrientationVector.signedLength();
+        let modifiedSpeedVector = this.speedScaledOrientationVector.add(dragVector);
+        if (
+            (preDragSpeed > 0 && modifiedSpeedVector.signedLength() < 0) ||
+            (preDragSpeed < 0 && modifiedSpeedVector.signedLength() > 0) ||
+            modifiedSpeedVector.signedLength().toString() === 'NaN' ||
+            modifiedSpeedVector.length() <= 0.1
+        ) {
+            modifiedSpeedVector = new Vector2D(0, 0);
         }
 
-        this.speedScaledOrientationVector = modifiedSpeedVector.clone();
+        this.speedScaledOrientationVector = modifiedSpeedVector.signedLength().toString() === 'NaN'
+            ? new Vector2D(0, 0)
+            : modifiedSpeedVector.clone();
     }
 }
 

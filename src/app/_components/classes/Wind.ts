@@ -3,10 +3,13 @@ import Vector2D from "./Vector2D";
 
 class Wind {
     private windVector: Vector2D;
-    private maxSpeed: number = 20; // maximum wind speed in knots
+    public speedScale: number = 0.5;
+    private maxSpeed: number = 14; // maximum wind speed in knots
     private minSpeed: number = 3; // minimum wind speed in knots
     private lastModification: number = 0;
     private lastModificationInterval: number = 1 * 30; // in milliseconds
+    private accelerationStep: number = 0.2; // acceleration factor
+    private orientationStep: number = 0.5; // acceleration factor
 
     constructor(orientation: number, speed: number) {
         const rad = convertToRadians(orientation);
@@ -26,8 +29,19 @@ class Wind {
 
         this.lastModification = 0;
 
-        const orientationChangeInDeg = Math.random() > 0.5 ? 1 : -1;
-        const speedChange = Math.random() > 0.5 ? 1 : -1;
+        const orientationRandomness = Math.random();
+        const orientationChangeInDeg = orientationRandomness > 0.66
+            ? this.orientationStep
+            : orientationRandomness > 0.33
+                ? -this.orientationStep
+                : 0;
+
+        const speedRandomness = Math.random();
+        const speedChange = speedRandomness > 0.66
+            ? this.accelerationStep
+            : speedRandomness > 0.33
+                ? -this.accelerationStep
+                : 0;
 
         let newOrientationInDeg = this.windVector.getAngleInDeg() + orientationChangeInDeg;
         if (newOrientationInDeg < 0) {

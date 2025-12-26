@@ -5,17 +5,21 @@ import Wind from "./Wind";
 class Sail {
     public sailLength: number = 8; // in meters
     public sailWidth: number = 2; // in meters
-    private orientationBoundsLeftVector: Vector2D;
-    private orientationBoundsRightVector: Vector2D;
-    private boundsError: number = 0.08;
-    private unFurledRatio: number = 0;
-    private maxUnFurledRatio: number = 1;
-    private minUnFurledRatio: number = 0;
+
+    private shipOrientationVector: Vector2D;
+
     private sailVector: Vector2D;
     private sailNormalVector: Vector2D;
     private windScaledNormalVector: Vector2D;
+
+    private orientationBoundsLeftVector: Vector2D;
+    private orientationBoundsRightVector: Vector2D;
+    private boundsError: number = 0.08;
+
+    private minUnFurledRatio: number = 0;
+    private unFurledRatio: number = 0;
+    private maxUnFurledRatio: number = 1;
     private defaultFurlingDelta: number = 0.01;
-    private shipOrientationVector: Vector2D;
 
     constructor(sailOffsetX: number, sailOffsetY: number, defaultUnFurledRatio: number, defaultOrientation: number, shipOrientationVector: Vector2D) {
         this.unFurledRatio = defaultUnFurledRatio;

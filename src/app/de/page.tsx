@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { siteConfig } from "../../siteConfig";
-import Simulator from "../_components/Simulator";
+import Simulator from "../_components/SimulatorView";
 
 export const metadata: Metadata = {
     ...siteConfig.metadata.de,

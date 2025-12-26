@@ -9,9 +9,6 @@ class Vector2D {
         this.y = y;
     }
 
-    // TODO: Fix vector directions with signedDistance or new vectors
-    // TODO: Fix Angle calculations -> angle becomes negative at 180°
-
     public getAngleInRad(): number {
         return Math.atan2(this.y, this.x);
     }
