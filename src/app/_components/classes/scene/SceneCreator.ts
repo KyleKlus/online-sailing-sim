@@ -1,7 +1,7 @@
-import Ship from "./Ship";
-import { SimulatorParams } from "./Simulator";
-import Vector2D from "./Vector2D";
-import Wind from "./Wind";
+import Ship from "../Ship";
+import { SimulatorParams } from "../Simulator";
+import Vector2D from "../Vector2D";
+import Wind from "../Wind";
 
 class SceneCreator {
     private params: SimulatorParams;

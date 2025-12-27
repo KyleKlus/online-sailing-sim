@@ -8,8 +8,8 @@ class Ship {
     public depth: number = 4; // in meters
     public length: number = 15; // in meters
 
-    private frontResistance: number = 0.002; // resistance factor per area
-    private backwardResistance: number = 0.4; // resistance
+    private frontResistance: number = 0.05; // resistance factor per area
+    private backwardResistance: number = 1; // resistance
     private keelResistance: number = 1; // How much the keel resists lateral movement
     private accelerationFactor: number = 0.008; // acceleration factor
 
@@ -154,11 +154,10 @@ class Ship {
     private applyDrag() {
         // gets the drag vector
         let dragVector = this.speedScaledOrientationVector.clone().rotate(Math.PI).normalize();
-
         if (this.speedScaledOrientationVector.signedLength() < 0) {
-            dragVector = dragVector.normalize().scale(this.backwardResistance * this.width * this.depth);
+            dragVector = dragVector.normalize().scale(this.backwardResistance);
         } else {
-            dragVector = dragVector.normalize().scale(this.frontResistance * this.width * this.depth);
+            dragVector = dragVector.normalize().scale(this.frontResistance);
         }
 
         this.dragVector = dragVector.clone();

@@ -1,5 +1,5 @@
-import PhysicsEngine from "./PhysicsEngine";
-import SceneCreator from "./SceneCreator";
+import PhysicsEngine from "./physics/PhysicsEngine";
+import SceneCreator from "./scene/SceneCreator";
 import Ship from "./Ship";
 import Wind from "./Wind";
 

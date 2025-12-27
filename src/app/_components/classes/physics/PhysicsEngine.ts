@@ -1,6 +1,6 @@
-import Ship from "./Ship";
-import { SimulatorParams } from "./Simulator";
-import Wind from "./Wind";
+import Ship from "../Ship";
+import { SimulatorParams } from "../Simulator";
+import Wind from "../Wind";
 
 enum Key {
     w = 0,
@@ -34,6 +34,14 @@ class PhysicsEngine {
 
     getWind(): Wind {
         return this.wind;
+    }
+
+    start() {
+
+    }
+
+    stop() {
+
     }
 
     calcTimeStep(deltaTime: number) {
